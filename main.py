@@ -27,13 +27,12 @@ chain = None
 
 
 class StreamHandler(BaseCallbackHandler):
-    def __init__(self, container, initial_text: str=""):
+    def __init__(self, container, initial_text: str = ""):
         self.container = container
         self.text = initial_text
         self.run_id_ignore_token = None
 
-    def on_llm_start(self, serialized:dict, prompts: list, **kwargs):
-        self.container.write(f"LLM Start: {serialized}")
+    def on_llm_start(self, serialized: dict, prompts: list, **kwargs):
         if prompts[0].startswith("Human"):
             self.run_id_ignore_token = kwargs.get("run_id")
 
@@ -93,17 +92,16 @@ def document_retriever(files, use_compression=False):
     vectordb = DocArrayInMemorySearch.from_documents(splits, embeddings)
 
     # Define retriever
-    retriever = vectordb.as_retriever(
+    vectordb_retriever = vectordb.as_retriever(
         search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4}
     )
 
     if not use_compression:
-        return retriever
+        return vectordb_retriever
 
     compressor = EmbeddingsFilter(embeddings=embeddings, similarity_threshold=0.76)
 
     return ContextualCompressionRetriever(base_compressor=compressor, base_retriever=retriever)
-
 
 
 class ChatProfileRoleEnum(str, Enum):
@@ -160,7 +158,7 @@ st.set_page_config(
     page_title="Streamlit Sidebar",
     page_icon=":bar_chart:",
     layout="wide",
-    initial_sidebar_state=st.session_state.sidebar_state,
+    initial_sidebar_state="expanded",
     menu_items={
         "About": """Chat with a Paper."""
     }
@@ -168,21 +166,12 @@ st.set_page_config(
 
 with st.sidebar:
     st.write("Chat with a paper.")
-    st.write("You can expand or collapse it using the button below.")
-    if st.button("Expand/Collapse Sidebar"):
-        st.session_state.sidebar_state = "expanded" if st.session_state.sidebar_state == "collapsed" else "collapsed"
-        st.experimental_rerun()
+    # noinspection PyPackageRequirements
     with st.container():
-        col1, col2 = st.columns([0.2, 0.8])
-        with col1:
-            st.write("This is a column")
-        with col2:
-            st.write("This is another column")
-
         # Model
         selected_model = st.selectbox(
             "Select a model",
-            options = [
+            options=[
                 LLMProviderEnum.GPT3.value,
                 LLMProviderEnum.GPT4.value,
                 LLMProviderEnum.GPT4o.value,
@@ -241,11 +230,10 @@ with st.sidebar:
             What would you like to know?
             """)
 
-        if api_key:
-            uploaded_files = st.file_uploader("Upload a paper to chat with",
-                                              type=["pdf", "txt"],
-                                              accept_multiple_files=True,
-                                              disabled=(not selected_model or not api_key))
+        uploaded_files = st.file_uploader("Upload a paper to chat with",
+                                          type=["pdf", "txt"],
+                                          accept_multiple_files=True,
+                                          disabled=(not selected_model or not api_key))
 if not selected_model:
     st.info("Please select a model to chat with.")
 if not api_key:
@@ -254,7 +242,8 @@ if not api_key:
 if uploaded_files:
     retriever = document_retriever(uploaded_files, use_compression=False)
     if retriever is not None:
-        st.write("Retriever created successfully.")
+        pass
+        # st.write("Got your Paper.")
 
     memory = ConversationBufferMemory(memory_key="chat_history", chat_memory=messages, return_messages=True)
     if selected_model in [LLMProviderEnum.GPT3, LLMProviderEnum.GPT4, LLMProviderEnum.GPT4o]:
