@@ -1,5 +1,7 @@
 # Chat with Paper
 
+## Try it - https://chat-with-paper.streamlit.app/
+
 * Choose the model
 * Upload your paper
 * Chat with it.
