@@ -155,7 +155,7 @@ if "sidebar_state" not in st.session_state:
 # Streamlit app configuration
 
 st.set_page_config(
-    page_title="Streamlit Sidebar",
+    page_title="Chat with paper",
     page_icon=":bar_chart:",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -165,7 +165,7 @@ st.set_page_config(
 )
 
 with st.sidebar:
-    st.write("Chat with a paper.")
+    st.write("Chat with paper.")
     # noinspection PyPackageRequirements
     with st.container():
         # Model
