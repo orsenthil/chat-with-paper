@@ -107,8 +107,8 @@ def document_retriever(files, use_compression=False):
 
 
 class ChatProfileRoleEnum(str, Enum):
-    HUMAN = "Human"
-    AI = "AI"
+    HUMAN = "human"
+    AI = "ai"
 
 
 class LLMProviderEnum(str, Enum):
@@ -274,8 +274,8 @@ if uploaded_files:
         )
 
         avatars = {
-            ChatProfileRoleEnum.AI.value: "AI",
-            ChatProfileRoleEnum.HUMAN.value: "Human",
+            ChatProfileRoleEnum.AI.value: "ai",
+            ChatProfileRoleEnum.HUMAN.value: "human",
         }
 
         for msg in messages.messages:
@@ -284,8 +284,8 @@ if uploaded_files:
 # Get User Input and Generate Response
 
 if user_query := st.chat_input(placeholder="Ask me Anything!", disabled=(not uploaded_files)):
-    st.chat_message("Human").write(user_query)
-    with st.chat_message("AI"):
+    st.chat_message("human").write(user_query)
+    with st.chat_message("ai"):
         retrieval_handler = PrintRetrievalHandler(st.empty())
         stream_handler = StreamHandler(st.empty())
         response = chain.run(user_query, callbacks=[retrieval_handler, stream_handler])
