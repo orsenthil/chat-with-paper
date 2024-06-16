@@ -91,9 +91,7 @@ def document_retriever(files, use_compression=False):
     vectordb = DocArrayInMemorySearch.from_documents(splits, embeddings)
 
     # Define retriever
-    vectordb_retriever = vectordb.as_retriever(
-        search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4}
-    )
+    vectordb_retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4})
 
     if not use_compression:
         return vectordb_retriever
@@ -127,9 +125,7 @@ st.set_page_config(
     page_icon=":bar_chart:",
     layout="wide",
     initial_sidebar_state="expanded",
-    menu_items={
-        "About": """Chat with a Paper."""
-    }
+    menu_items={"About": """Chat with a Paper."""},
 )
 
 with st.sidebar:
@@ -145,7 +141,7 @@ with st.sidebar:
                 LLMProviderEnum.GPT4o.value,
             ],
             index=0,
-            placeholder="Select a model to analyze the paper with."
+            placeholder="Select a model to analyze the paper with.",
         )
 
         if selected_model:
@@ -161,16 +157,20 @@ with st.sidebar:
 
         if len(messages.messages) == 0 or st.button("Clear Chat"):
             messages.clear()
-            messages.add_ai_message("""
+            messages.add_ai_message(
+                """
             Hello, I have studied your paper, and I am ready to answer your questions.
 
             What would you like to know?
-            """)
+            """
+            )
 
-        uploaded_files = st.file_uploader("Upload a paper to chat with",
-                                          type=["pdf", "txt"],
-                                          accept_multiple_files=True,
-                                          disabled=(not selected_model or not api_key))
+        uploaded_files = st.file_uploader(
+            "Upload a paper to chat with",
+            type=["pdf", "txt"],
+            accept_multiple_files=True,
+            disabled=(not selected_model or not api_key),
+        )
 if not selected_model:
     st.info("Please select a model to chat with.")
 if not api_key:
