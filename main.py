@@ -1,7 +1,7 @@
 import os
 import tempfile
 from enum import Enum
-from typing import Dict, Any, Optional, List
+from typing import Any
 from uuid import UUID
 
 import streamlit as st
@@ -15,7 +15,6 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import DocArrayInMemorySearch
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_openai import ChatOpenAI
-
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 GPT3_LLM_MODEL = "gpt-3.5-turbo"
@@ -50,13 +49,13 @@ class PrintRetrievalHandler(BaseCallbackHandler):
 
     def on_retriever_start(
         self,
-        serialized: Dict[str, Any],
+        serialized: dict[str, Any],
         query: str,
         *,
         run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        parent_run_id: UUID | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> Any:
         self.status.text("Retrieving...")
