@@ -1,59 +1,17 @@
 from enum import Enum
-from typing import Any
-from uuid import UUID
 
 import streamlit as st
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
-from langchain_core.callbacks import BaseCallbackHandler
 from langchain_openai import ChatOpenAI
 
+from langchain_callbacks import StreamHandler, PrintRetrievalHandler
 from models import GPT3_LLM_MODEL, GPT4_LLM_MODEL, GPT4o_LLM_MODEL, LLMProviderEnum
 from retriever import document_retriever
 
 uploaded_files = []
 chain = None
-
-
-class StreamHandler(BaseCallbackHandler):
-    def __init__(self, container, initial_text: str = ""):
-        self.container = container
-        self.text = initial_text
-        self.run_id_ignore_token = None
-
-    def on_llm_start(self, serialized: dict, prompts: list, **kwargs):
-        if prompts[0].startswith("Human"):
-            self.run_id_ignore_token = kwargs.get("run_id")
-
-    def on_llm_new_token(self, token: str, **kwargs) -> None:
-        if self.run_id_ignore_token == kwargs.get("run_id", False):
-            return
-        self.text += token
-        self.container.markdown(self.text)
-
-
-class PrintRetrievalHandler(BaseCallbackHandler):
-    def __init__(self, container):
-        self.status = container.status("thinking...")
-        self.container = container
-
-    def on_retriever_start(
-        self,
-        serialized: dict[str, Any],
-        query: str,
-        *,
-        run_id: UUID,
-        parent_run_id: UUID | None = None,
-        tags: list[str] | None = None,
-        metadata: dict[str, Any] | None = None,
-        **kwargs: Any,
-    ) -> Any:
-        self.status.text("Retrieving...")
-
-    def on_retriever_end(self, documents, **kwargs):
-        self.status.text("Retrieved.")
-        self.container.empty()
 
 
 class ChatProfileRoleEnum(str, Enum):
