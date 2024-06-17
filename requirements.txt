@@ -5,3 +5,4 @@ langchain-text-splitters
 langchain_openai
 sentence-transformers
 docarray
+pypdf
