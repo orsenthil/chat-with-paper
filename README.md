@@ -1,5 +1,7 @@
 # Chat with Paper
 
+![Test Status](https://github.com/orsenthil/chat-with-paper/actions/workflows/python.yaml/badge.svg)
+
 ## Try it - https://chat-with-paper.streamlit.app/
 
 * Choose the model
