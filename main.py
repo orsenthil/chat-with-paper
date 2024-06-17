@@ -124,7 +124,7 @@ def run_streamlit_app():
         with st.chat_message("ai"):
             retrieval_handler = PrintRetrievalHandler(st.empty())
             stream_handler = StreamHandler(st.empty())
-            response = chain.run(user_query, callbacks=[retrieval_handler, stream_handler])
+            chain.run(user_query, callbacks=[retrieval_handler, stream_handler])
 
     if selected_model and model_name:
         st.sidebar.caption(f"Using {selected_model} model.")
