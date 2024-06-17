@@ -9,11 +9,8 @@ from langchain_community.chat_message_histories import StreamlitChatMessageHisto
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_openai import ChatOpenAI
 
+from models import GPT3_LLM_MODEL, GPT4_LLM_MODEL, GPT4o_LLM_MODEL, LLMProviderEnum
 from retriever import document_retriever
-
-GPT3_LLM_MODEL = "gpt-3.5-turbo"
-GPT4_LLM_MODEL = "gpt-4-turbo"
-GPT4o_LLM_MODEL = "gpt-4o"
 
 uploaded_files = []
 chain = None
@@ -62,12 +59,6 @@ class PrintRetrievalHandler(BaseCallbackHandler):
 class ChatProfileRoleEnum(str, Enum):
     HUMAN = "human"
     AI = "ai"
-
-
-class LLMProviderEnum(str, Enum):
-    GPT3 = "GPT-3"
-    GPT4 = "GPT-4"
-    GPT4o = "GPT-4o"
 
 
 # Setup the sidebar for streamlit
@@ -129,6 +120,7 @@ with st.sidebar:
             accept_multiple_files=True,
             disabled=(not selected_model or not api_key),
         )
+
 if not selected_model:
     st.info("Please select a model to chat with.")
 if not api_key:
