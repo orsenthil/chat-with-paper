@@ -10,6 +10,9 @@ from langchain_callbacks import StreamHandler, PrintRetrievalHandler
 from models import GPT3_LLM_MODEL, GPT4_LLM_MODEL, GPT4o_LLM_MODEL, LLMProviderEnum
 from retriever import document_retriever
 
+chain = None
+uploaded_files = []
+
 
 class ChatProfileRoleEnum(str, Enum):
     HUMAN = "human"
@@ -32,103 +35,95 @@ st.set_page_config(
 )
 
 
-def run_streamlit_app():
-    chain = None
-    uploaded_files = []
+with st.sidebar:
+    st.write("Chat with paper.")
+    # noinspection PyPackageRequirements
+    with st.container():
+        # Model
+        selected_model = st.selectbox(
+            "Select a model",
+            options=[
+                LLMProviderEnum.GPT3.value,
+                LLMProviderEnum.GPT4.value,
+                LLMProviderEnum.GPT4o.value,
+            ],
+            index=0,
+            placeholder="Select a model to analyze the paper with.",
+        )
 
-    with st.sidebar:
-        st.write("Chat with paper.")
-        # noinspection PyPackageRequirements
-        with st.container():
-            # Model
-            selected_model = st.selectbox(
-                "Select a model",
-                options=[
-                    LLMProviderEnum.GPT3.value,
-                    LLMProviderEnum.GPT4.value,
-                    LLMProviderEnum.GPT4o.value,
-                ],
-                index=0,
-                placeholder="Select a model to analyze the paper with.",
-            )
+        if selected_model:
+            api_key = st.text_input(f" {selected_model} API Key", type="password")
+            if selected_model == LLMProviderEnum.GPT3:
+                model_name = GPT3_LLM_MODEL
+            elif selected_model == LLMProviderEnum.GPT4:
+                model_name = GPT4_LLM_MODEL
+            elif selected_model == LLMProviderEnum.GPT4o:
+                model_name = GPT4o_LLM_MODEL
 
-            if selected_model:
-                api_key = st.text_input(f" {selected_model} API Key", type="password")
-                if selected_model == LLMProviderEnum.GPT3:
-                    model_name = GPT3_LLM_MODEL
-                elif selected_model == LLMProviderEnum.GPT4:
-                    model_name = GPT4_LLM_MODEL
-                elif selected_model == LLMProviderEnum.GPT4o:
-                    model_name = GPT4o_LLM_MODEL
+        messages = StreamlitChatMessageHistory()
 
-            messages = StreamlitChatMessageHistory()
-
-            if len(messages.messages) == 0 or st.button("Clear Chat"):
-                messages.clear()
-                messages.add_ai_message(
-                    """
-                Hello, I have studied your paper, and I am ready to answer your questions.
-
-                What would you like to know?
+        if len(messages.messages) == 0 or st.button("Clear Chat"):
+            messages.clear()
+            messages.add_ai_message(
                 """
-                )
+            Hello, I have studied your paper, and I am ready to answer your questions.
 
-            uploaded_files = st.file_uploader(
-                "Upload a paper to chat with",
-                type=["pdf", "txt"],
-                accept_multiple_files=True,
-                disabled=(not selected_model or not api_key),
+            What would you like to know?
+            """
             )
 
-    if not selected_model:
-        st.info("Please select a model to chat with.")
+        uploaded_files = st.file_uploader(
+            "Upload a paper to chat with",
+            type=["pdf", "txt"],
+            accept_multiple_files=True,
+            disabled=(not selected_model or not api_key),
+        )
 
-    if not api_key:
-        st.info(f"Please enter the API key of {selected_model} to chat with the paper.")
+if not selected_model:
+    st.info("Please select a model to chat with.")
 
-    if uploaded_files:
-        retriever = document_retriever(uploaded_files, use_compression=True)
-        if retriever is not None:
-            pass
-            # st.write("Got your Paper.")
+if not api_key:
+    st.info(f"Please enter the API key of {selected_model} to chat with the paper.")
 
-        memory = ConversationBufferMemory(memory_key="chat_history", chat_memory=messages, return_messages=True)
-        if selected_model in [LLMProviderEnum.GPT3, LLMProviderEnum.GPT4, LLMProviderEnum.GPT4o]:
-            st.write(f"Chatting with {LLMProviderEnum(selected_model).value} model.")
-            llm = ChatOpenAI(model=model_name, api_key=api_key, temperature=0, streaming=True)
+if uploaded_files:
+    retriever = document_retriever(uploaded_files, use_compression=False)
+    if retriever is not None:
+        pass
+        # st.write("Got your Paper.")
 
-            if llm is None:
-                st.error("Failed to create the LLM model. Please check your API Key.")
+    memory = ConversationBufferMemory(memory_key="chat_history", chat_memory=messages, return_messages=True)
+    if selected_model in [LLMProviderEnum.GPT3, LLMProviderEnum.GPT4, LLMProviderEnum.GPT4o]:
+        st.write(f"Chatting with {LLMProviderEnum(selected_model).value} model.")
+        llm = ChatOpenAI(model=model_name, api_key=api_key, temperature=0, streaming=True)
 
-            # Create the Conversational RetrievalChain using the LLM instance.
-            chain = ConversationalRetrievalChain.from_llm(
-                llm=llm,
-                retriever=retriever,
-                memory=memory,
-                verbose=True,
-                max_tokens_limit=4000,
-            )
+        if llm is None:
+            st.error("Failed to create the LLM model. Please check your API Key.")
 
-            avatars = {
-                ChatProfileRoleEnum.AI.value: "ai",
-                ChatProfileRoleEnum.HUMAN.value: "human",
-            }
+        # Create the Conversational RetrievalChain using the LLM instance.
+        chain = ConversationalRetrievalChain.from_llm(
+            llm=llm,
+            retriever=retriever,
+            memory=memory,
+            verbose=True,
+            max_tokens_limit=4000,
+        )
 
-            for msg in messages.messages:
-                st.chat_message(avatars[msg.type]).write(msg.content)
+        avatars = {
+            ChatProfileRoleEnum.AI.value: "ai",
+            ChatProfileRoleEnum.HUMAN.value: "human",
+        }
 
-    # Get User Input and Generate Response
+        for msg in messages.messages:
+            st.chat_message(avatars[msg.type]).write(msg.content)
 
-    if user_query := st.chat_input(placeholder="Ask me Anything!", disabled=(not uploaded_files)):
-        st.chat_message("human").write(user_query)
-        with st.chat_message("ai"):
-            retrieval_handler = PrintRetrievalHandler(st.empty())
-            stream_handler = StreamHandler(st.empty())
-            chain.run(user_query, callbacks=[retrieval_handler, stream_handler])
+# Get User Input and Generate Response
 
-    if selected_model and model_name:
-        st.sidebar.caption(f"Using {selected_model} model.")
+if user_query := st.chat_input(placeholder="Ask me Anything!", disabled=(not uploaded_files)):
+    st.chat_message("human").write(user_query)
+    with st.chat_message("ai"):
+        retrieval_handler = PrintRetrievalHandler(st.empty())
+        stream_handler = StreamHandler(st.empty())
+        chain.run(user_query, callbacks=[retrieval_handler, stream_handler])
 
-
-if __name__ == "__main__":
-    run_streamlit_app()
+if selected_model and model_name:
+    st.sidebar.caption(f"Using {selected_model} model.")
