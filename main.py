@@ -177,7 +177,7 @@ if not api_key:
     st.info(f"Please enter the API key of {selected_model} to chat with the paper.")
 
 if uploaded_files:
-    retriever = document_retriever(uploaded_files, use_compression=False)
+    retriever = document_retriever(uploaded_files, use_compression=True)
     if retriever is not None:
         pass
         # st.write("Got your Paper.")
